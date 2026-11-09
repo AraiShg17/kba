@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { marketProbabilities, defaultSelected, allocate, summary } from '../public/logic.js';
+import { marketProbabilities, defaultSelected, allocate, allocateEqual, summary } from '../public/logic.js';
 import { parseIndex, parseDay, parseRace, parseOdds } from '../server.js';
 
 const horses = Array.from({ length: 8 }, (_, i) => ({
@@ -26,6 +26,19 @@ test('6頭に100円単位で配分し、56通りすべてを計算する', () =>
   assert.equal(result.byHits[0].count, 6);
   assert.ok(result.rows.every(row => row.hits >= 1));
   assert.equal(result.worst, Math.min(...result.rows.map(row => row.lowNet)));
+});
+
+test('参考画像の12・12・6・6・4・4倍では高オッズ6頭を選び逆数配分が損失をならす', () => {
+  const example = [12, 12, 6, 6, 4, 4, 3, 3].map((odds, index) => ({
+    number: index + 1, winOdds: odds, placeLow: odds, placeHigh: odds,
+  }));
+  const selected = defaultSelected(example);
+  assert.deepEqual(selected, [true, true, true, true, true, true, false, false]);
+  const inverse = allocate(example, selected, 10000);
+  assert.deepEqual(inverse, [900, 900, 1700, 1700, 2400, 2400, 0, 0]);
+  assert.equal(summary(example, inverse).byHits[0].worst, -400);
+  assert.equal(summary(example, allocateEqual(example, selected, 10000)).byHits[0].worst, -3600);
+  assert.deepEqual(defaultSelected(example, 'probability'), [false, false, true, true, true, true, true, true]);
 });
 
 test('JRAの開催選択からレースとオッズを読み取る', () => {

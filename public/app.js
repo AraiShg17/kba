@@ -1,4 +1,4 @@
-import { marketProbabilities, defaultSelected, allocate, summary } from './logic.js';
+import { marketProbabilities, defaultSelected, allocate, allocateEqual, summary } from './logic.js';
 
 const $ = id => document.getElementById(id);
 const yen = value => '¥' + Math.round(value).toLocaleString('ja-JP');
@@ -61,13 +61,14 @@ async function loadRace(race) {
   $('raceMeta').textContent = race.number + 'R · ' + race.course + ' ' + race.distance + 'm · ' + race.time;
   $('jraLink').href = 'https://www.jra.go.jp/JRADB/accessD.html?CNAME=' + encodeURIComponent(race.id);
   $('jraLink').hidden = false;
+  $('reloadOdds').hidden = false;
   $('oddsNotice').textContent = '出馬表とオッズを取得中…';
   $('workbench').scrollIntoView({ behavior: 'smooth' });
   try {
     const data = await api('/api/race?id=' + encodeURIComponent(race.id) + '&odds=' + encodeURIComponent(race.oddsCode || ''));
     if (data.horses.length !== 8) throw new Error('現在の出走馬が8頭ではありません');
     current = { ...race, horses: data.horses, fetchedAt: data.fetchedAt };
-    selected = defaultSelected(current.horses);
+    selected = defaultSelected(current.horses, $('selectionMode').value);
     $('oddsNotice').textContent = data.oddsError ? 'オッズ取得失敗: ' + data.oddsError + '。数値を確認して手入力できます。' : 'JRAから取得: ' + localTime(data.fetchedAt) + '。複勝オッズは購入時まで変動します。';
     renderWorkbench();
   } catch (error) {
@@ -80,7 +81,11 @@ async function loadRace(race) {
 function renderWorkbench() {
   if (!current) return;
   const probabilities = marketProbabilities(current.horses);
-  $('selectionReason').textContent = '買わない2頭: ' + current.horses.filter((_, i) => !selected[i]).map(h => h.number + '番 ' + h.horse).join('、') + '。初期選択は市場ベース推定の上位6頭です。';
+  const excluded = current.horses.filter((_, i) => !selected[i]).map(h => h.number + '番 ' + h.horse);
+  const oddsSource = current.horses.every(h => h.placeLow >= 1) ? '複勝オッズ下限' : '単勝オッズ（複勝未掲載の代用）';
+  const method = $('selectionMode').value === 'science' ? oddsSource + 'が高い6頭' : '市場ベースの3着内推定が高い6頭';
+  $('selectionReason').textContent = '買わない2頭: ' + (excluded.join('、') || 'なし') + '。初期案は' + method + 'を選びます。';
+  $('strategyDots').innerHTML = current.horses.map((h, i) => '<div class="strategy-dot ' + (selected[i] ? 'active' : 'excluded') + '"><span>' + h.number + '</span><small>' + (selected[i] ? '買う' : '除外') + '</small></div>').join('');
   const budget = Math.min(10000, Math.max(600, Math.floor(Number($('budget').value) / 100) * 100 || 10000));
   $('budget').value = budget;
   stakes = allocate(current.horses, selected, budget);
@@ -113,6 +118,10 @@ function renderScenarios() {
   $('profitValue').textContent = result ? result.profitable + ' / 56' : '—';
   $('hitSummary').innerHTML = result ? result.byHits.map(row => '<div class="hit-card"><span>' + row.hits + '頭的中 <small>' + row.count + '通り</small></span><strong class="' + (row.worst < 0 ? 'negative' : 'positive') + '">' + signed(row.worst) + '</strong><small>下限の最悪収支 / 上限の最大 ' + signed(row.best) + '</small></div>').join('') : '';
   $('scenarioRows').innerHTML = result ? result.rows.map(row => '<tr><td>' + row.winners.join(' · ') + '</td><td>' + row.hits + '頭</td><td class="' + (row.lowNet < 0 ? 'negative' : 'positive') + '">' + signed(row.lowNet) + '</td><td>' + signed(row.highNet) + '</td></tr>').join('') : '';
+  const equal = valid ? summary(current.horses, allocateEqual(current.horses, selected, Number($('budget').value))) : null;
+  $('methodComparison').innerHTML = result && equal
+    ? '<div><span>等額配分 · 1頭的中の最悪収支</span><strong>' + signed(equal.byHits[0].worst) + '</strong></div><div class="recommended"><span>逆数配分 · 1頭的中の最悪収支</span><strong>' + signed(result.byHits[0].worst) + '</strong></div><p>同じ6頭と購入総額で比較。オッズ下限を固定した概算です。逆数配分が常に有利な結果や利益を保証するものではありません。</p>'
+    : '';
 }
 
 function savePlan() {
@@ -171,13 +180,14 @@ function setupManual() {
     }));
     if (horses.some(h => !h.horse || !(h.placeLow >= 1))) return alert('8頭すべての馬名と複勝下限を入力してください。');
     current = { date: $('manualDate').value, venue: $('manualVenue').value.trim(), name: $('manualName').value.trim() || '手入力レース', number: 0, course: '', distance: '', time: '', horses };
-    selected = defaultSelected(horses);
+    selected = defaultSelected(horses, $('selectionMode').value);
     $('emptyWorkbench').hidden = true; $('workbenchContent').hidden = false;
     $('raceCaption').textContent = current.date + ' / ' + current.venue;
     $('raceTitle').textContent = current.name;
     $('raceMeta').textContent = '手入力データ · 8頭';
     $('oddsNotice').textContent = '手入力データです。馬名・オッズの正確性をJRAで確認してください。';
     $('jraLink').hidden = true;
+    $('reloadOdds').hidden = true;
     renderWorkbench();
     $('workbench').scrollIntoView({ behavior: 'smooth' });
   });
@@ -185,7 +195,8 @@ function setupManual() {
 
 $('refresh').addEventListener('click', search);
 $('budget').addEventListener('change', renderWorkbench);
-$('autoSelect').addEventListener('click', () => { if (current) { selected = defaultSelected(current.horses); renderWorkbench(); } });
+$('autoSelect').addEventListener('click', () => { if (current) { selected = defaultSelected(current.horses, $('selectionMode').value); renderWorkbench(); } });
+$('selectionMode').addEventListener('change', () => { if (current) { selected = defaultSelected(current.horses, $('selectionMode').value); renderWorkbench(); } });
 $('reloadOdds').addEventListener('click', () => { if (current?.id) loadRace(current); });
 $('savePlan').addEventListener('click', savePlan);
 $('exportData').addEventListener('click', () => {

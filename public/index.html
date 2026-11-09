@@ -13,10 +13,10 @@
   </header>
   <main class="shell">
     <section class="hero">
-      <div class="hero-copy"><span class="eyebrow">2026.11.14 — 11.15 / TOKYO · KYOTO · FUKUSHIMA</span><h1>8頭立てを探し、<br><em>6頭の買い方</em>を考える。</h1><p>JRAの出馬表とオッズを読み込み、3着以内の市場ベース推定、購入比率、56通りの収支をひとつの画面で確認。購入記録はこのブラウザに保存します。</p><a class="primary hero-link" href="#search">対象レースを探す <span>↗</span></a></div>
+      <div class="hero-copy"><span class="eyebrow">2026.11.14 — 11.15 / TOKYO · KYOTO · FUKUSHIMA</span><h1>8頭立てを探し、<br><em>6頭の買い方</em>を考える。</h1><p>高オッズの6頭を選び、オッズの逆数で購入額を配分する方式を検証。JRAの出馬表・オッズ、56通りの収支、実際の結果をひとつの画面で確認できます。</p><a class="primary hero-link" href="#search">対象レースを探す <span>↗</span></a></div>
       <div class="hero-art"><span class="orb orb-one"></span><span class="orb orb-two"></span><div class="track-ring"><div class="track-inner"><span>6 / 8</span><small>PLACE STRATEGY</small></div></div><div class="hero-float float-one">上位3着まで</div><div class="hero-float float-two">56 通りの結果</div></div>
     </section>
-    <section class="quick-stats"><div><span>対象期間</span><strong>11.14 <small>土</small> — 11.15 <small>日</small></strong></div><div><span>購入上限</span><strong>¥10,000</strong></div><div><span>購入対象</span><strong>8頭中 6頭</strong></div><div><span>分析方式</span><strong>市場オッズ + 全組合せ</strong></div></section>
+    <section class="quick-stats"><div><span>対象期間</span><strong>11.14 <small>土</small> — 11.15 <small>日</small></strong></div><div><span>購入上限</span><strong>¥10,000</strong></div><div><span>購入対象</span><strong>8頭中 6頭</strong></div><div><span>初期配分</span><strong>複勝オッズの逆数</strong></div></section>
     <section id="search" class="section">
       <div class="section-heading"><div><span class="eyebrow">01 / DISCOVER</span><h2>8頭立てのレースを探す</h2><p>JRA出馬表を取得し、対象期間の8頭立てだけを表示します。</p></div><button id="refresh" class="primary">JRAから更新 <span>↻</span></button></div>
       <div class="search-panel"><div class="date-chip">11月14日 <span>土</span></div><div class="date-chip">11月15日 <span>日</span></div><span class="source-note">東京 / 京都 / 福島 · 8頭立てのみ</span><span id="fetchedAt" class="fetched"></span></div>
@@ -25,15 +25,18 @@
       <details class="manual"><summary>対象レースを手入力する</summary><p>JRAの画面が取得できない場合に使えます。8頭の馬名とオッズを入力してください。</p><div class="manual-meta"><input id="manualDate" type="date" value="2026-11-14" aria-label="日付"><input id="manualVenue" placeholder="競馬場" value="東京" aria-label="競馬場"><input id="manualName" placeholder="レース名" aria-label="レース名"></div><div id="manualRows" class="manual-rows"></div><button id="loadManual" class="secondary">このレースを分析</button></details>
     </section>
     <section id="workbench" class="section">
-      <div class="section-heading"><div><span class="eyebrow">02 / ANALYZE</span><h2>6頭を選び、金額を配分する</h2><p>単勝オッズから3着以内を暫定推定。複勝の下限オッズで1頭的中時の払戻をならします。</p></div><div class="budget"><label for="budget">購入総額の上限</label><div><span>¥</span><input id="budget" type="number" min="600" max="10000" step="100" value="10000"></div></div></div>
+      <div class="section-heading"><div><span class="eyebrow">02 / ANALYZE</span><h2>6頭を選び、金額を配分する</h2><p>参考画像の方法を初期案に設定。高オッズの6頭を選び、複勝オッズの逆数で配分します。</p></div><div class="budget"><label for="budget">購入総額の上限</label><div><span>¥</span><input id="budget" type="number" min="600" max="10000" step="100" value="10000"></div></div></div>
       <div id="emptyWorkbench" class="empty-state"><div class="empty-icon">↗</div><h3>レースを選んで分析を始める</h3><p>出馬表が公開されるまでは、手入力で計算を試せます。</p></div>
       <div id="workbenchContent" hidden>
         <div class="selected-race"><div><span id="raceCaption" class="eyebrow"></span><h3 id="raceTitle"></h3><p id="raceMeta"></p></div><div class="selected-actions"><button id="reloadOdds" class="secondary">オッズ再取得</button><a id="jraLink" target="_blank" rel="noopener noreferrer">JRA原表 ↗</a></div></div>
         <div id="oddsNotice" class="notice subtle"></div>
+        <div class="strategy-control"><div><span class="eyebrow">SELECTION METHOD</span><h4>買わない2頭の選び方</h4><p>参考画像の方式は、複勝オッズ下限が低い2頭を外します。高オッズの馬ほど的中しにくい傾向もあるため、3着内推定が高い6頭の案と比較できます。</p></div><select id="selectionMode" aria-label="6頭の選び方"><option value="science">高オッズの6頭を選ぶ</option><option value="probability">3着内推定が高い6頭を選ぶ</option></select></div>
+        <div class="method-visual"><div id="strategyDots" class="strategy-dots"></div><div><strong>配分比率 ≈ 1 / 複勝オッズ下限</strong><p>1頭だけ当たった場合の払戻を近づける配分です。複勝オッズと払戻は変動するため、損失額は確定しません。</p></div></div>
         <div class="table-wrap"><table class="horse-table"><thead><tr><th>購入</th><th>馬番 / 馬名</th><th>3着内推定</th><th>単勝</th><th>複勝 下限</th><th>複勝 上限</th><th>配分</th><th>購入額</th></tr></thead><tbody id="horseRows"></tbody></table></div>
-        <div class="table-foot"><p><strong>市場ベース推定</strong>は単勝オッズを正規化した順位モデルの値です。独立した予測精度は検証されておらず、期待利益を示しません。<br><span id="selectionReason"></span></p><button id="autoSelect" class="text-button">上位6頭を再選択</button></div>
+        <div class="table-foot"><p><strong>市場ベース推定</strong>は単勝オッズを正規化した順位モデルの値です。独立した予測精度は検証されておらず、期待利益を示しません。<br><span id="selectionReason"></span></p><button id="autoSelect" class="text-button">選択を初期案に戻す</button></div>
         <div id="selectionNotice" class="notice warn" hidden></div>
         <div class="analysis-grid"><article class="analysis-card"><span>購入総額</span><strong id="costValue">—</strong><small>上限 ¥10,000 / 100円単位</small></article><article class="analysis-card accent"><span>最悪ケース · 複勝下限</span><strong id="worstValue">—</strong><small>56通りの3着以内の組合せ</small></article><article class="analysis-card"><span>下限でも黒字の組合せ</span><strong id="profitValue">—</strong><small>組合せ数は発生確率ではありません</small></article></div>
+        <div id="methodComparison" class="method-comparison"></div>
         <div class="scenario-head"><div><h3>的中頭数ごとの収支</h3><p>複勝オッズの表示範囲を使った概算</p></div><span>全 56 通り</span></div>
         <div id="hitSummary" class="hit-grid"></div>
         <details class="scenario-details"><summary>56通りの収支を表示</summary><div class="table-wrap"><table><thead><tr><th>3着以内の馬番</th><th>購入馬の的中</th><th>下限での収支</th><th>上限での収支</th></tr></thead><tbody id="scenarioRows"></tbody></table></div></details>

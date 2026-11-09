@@ -11,24 +11,52 @@ export function marketProbabilities(horses) {
   return probabilities;
 }
 
-export function defaultSelected(horses) {
+export function defaultSelected(horses, mode = 'science') {
   const p = marketProbabilities(horses);
-  if (p.some(v => v === null)) return horses.map((_, i) => i < 6);
-  const order = p.map((value, index) => ({ value, index })).sort((a, b) => b.value - a.value);
+  const placeAvailable = horses.every(h => h.placeLow >= 1);
+  const winAvailable = horses.every(h => h.winOdds >= 1);
+  const values = mode === 'probability'
+    ? p
+    : placeAvailable ? horses.map(h => h.placeLow) : winAvailable ? horses.map(h => h.winOdds) : horses.map(() => null);
+  if (values.some(v => v === null)) return horses.map((_, i) => i < 6);
+  const order = values.map((value, index) => ({ value, index })).sort((a, b) => b.value - a.value || a.index - b.index);
   const chosen = new Set(order.slice(0, 6).map(x => x.index));
   return horses.map((_, i) => chosen.has(i));
 }
 
+// 100円単位のミニマックス配分。1頭だけ的中した場合の最低払戻を最大化する。
+// 連続額での比率は 1/複勝オッズ。二分探索で整数単位の最適な最低払戻を求める。
 export function allocate(horses, selected, budget) {
   const stakes = horses.map(() => 0);
   const indices = selected.map((yes, i) => yes ? i : -1).filter(i => i >= 0);
   const units = Math.floor(Number(budget) / 100);
   if (indices.length !== 6 || units < 6 || indices.some(i => !(horses[i].placeLow > 0))) return stakes;
-  for (const i of indices) stakes[i] = 100;
-  for (let n = 6; n < units; n++) {
+  const payoutPerUnit = indices.map(i => Math.round(horses[i].placeLow * 100));
+  const needed = target => payoutPerUnit.reduce((sum, payout) => sum + Math.max(1, Math.ceil(target / payout)), 0);
+  let low = 0, high = Math.max(...payoutPerUnit) * units;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (needed(mid) <= units) low = mid;
+    else high = mid - 1;
+  }
+  indices.forEach((i, position) => {
+    stakes[i] = Math.max(1, Math.ceil(low / payoutPerUnit[position])) * 100;
+  });
+  let remaining = units - stakes.reduce((sum, amount) => sum + amount / 100, 0);
+  while (remaining-- > 0) {
     const i = indices.reduce((best, current) => stakes[current] * horses[current].placeLow < stakes[best] * horses[best].placeLow ? current : best);
     stakes[i] += 100;
   }
+  return stakes;
+}
+
+export function allocateEqual(horses, selected, budget) {
+  const stakes = horses.map(() => 0);
+  const indices = selected.map((yes, i) => yes ? i : -1).filter(i => i >= 0);
+  const units = Math.floor(Number(budget) / 100);
+  if (indices.length !== 6 || units < 6) return stakes;
+  const base = Math.floor(units / 6);
+  indices.forEach((i, order) => { stakes[i] = (base + (order < units % 6 ? 1 : 0)) * 100; });
   return stakes;
 }
 
