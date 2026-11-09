@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111b18">
+  <title>八頭ラボ | 複勝6頭買い検証</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell nav"><a href="/" class="logo"><span class="logo-mark">8</span><span>八頭<span class="logo-muted">ラボ</span></span></a><nav><a href="#search">レースを探す</a><a href="#workbench">配分を考える</a><a href="#ledger">収支記録</a></nav><span class="nav-tag">JRA 実戦ノート</span></div>
+  </header>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-copy"><span class="eyebrow">2026.11.14 — 11.15 / TOKYO · KYOTO · FUKUSHIMA</span><h1>8頭立てを探し、<br><em>6頭の買い方</em>を考える。</h1><p>JRAの出馬表とオッズを読み込み、3着以内の市場ベース推定、購入比率、56通りの収支をひとつの画面で確認。購入記録はこのブラウザに保存します。</p><a class="primary hero-link" href="#search">対象レースを探す <span>↗</span></a></div>
+      <div class="hero-art"><span class="orb orb-one"></span><span class="orb orb-two"></span><div class="track-ring"><div class="track-inner"><span>6 / 8</span><small>PLACE STRATEGY</small></div></div><div class="hero-float float-one">上位3着まで</div><div class="hero-float float-two">56 通りの結果</div></div>
+    </section>
+    <section class="quick-stats"><div><span>対象期間</span><strong>11.14 <small>土</small> — 11.15 <small>日</small></strong></div><div><span>購入上限</span><strong>¥10,000</strong></div><div><span>購入対象</span><strong>8頭中 6頭</strong></div><div><span>分析方式</span><strong>市場オッズ + 全組合せ</strong></div></section>
+    <section id="search" class="section">
+      <div class="section-heading"><div><span class="eyebrow">01 / DISCOVER</span><h2>8頭立てのレースを探す</h2><p>JRA出馬表を取得し、対象期間の8頭立てだけを表示します。</p></div><button id="refresh" class="primary">JRAから更新 <span>↻</span></button></div>
+      <div class="search-panel"><div class="date-chip">11月14日 <span>土</span></div><div class="date-chip">11月15日 <span>日</span></div><span class="source-note">東京 / 京都 / 福島 · 8頭立てのみ</span><span id="fetchedAt" class="fetched"></span></div>
+      <div id="searchStatus" class="notice">取得待ちです。「JRAから更新」を押してください。</div>
+      <div id="raceList" class="race-grid"></div>
+      <details class="manual"><summary>対象レースを手入力する</summary><p>JRAの画面が取得できない場合に使えます。8頭の馬名とオッズを入力してください。</p><div class="manual-meta"><input id="manualDate" type="date" value="2026-11-14" aria-label="日付"><input id="manualVenue" placeholder="競馬場" value="東京" aria-label="競馬場"><input id="manualName" placeholder="レース名" aria-label="レース名"></div><div id="manualRows" class="manual-rows"></div><button id="loadManual" class="secondary">このレースを分析</button></details>
+    </section>
+    <section id="workbench" class="section">
+      <div class="section-heading"><div><span class="eyebrow">02 / ANALYZE</span><h2>6頭を選び、金額を配分する</h2><p>単勝オッズから3着以内を暫定推定。複勝の下限オッズで1頭的中時の払戻をならします。</p></div><div class="budget"><label for="budget">購入総額の上限</label><div><span>¥</span><input id="budget" type="number" min="600" max="10000" step="100" value="10000"></div></div></div>
+      <div id="emptyWorkbench" class="empty-state"><div class="empty-icon">↗</div><h3>レースを選んで分析を始める</h3><p>出馬表が公開されるまでは、手入力で計算を試せます。</p></div>
+      <div id="workbenchContent" hidden>
+        <div class="selected-race"><div><span id="raceCaption" class="eyebrow"></span><h3 id="raceTitle"></h3><p id="raceMeta"></p></div><div class="selected-actions"><button id="reloadOdds" class="secondary">オッズ再取得</button><a id="jraLink" target="_blank" rel="noopener noreferrer">JRA原表 ↗</a></div></div>
+        <div id="oddsNotice" class="notice subtle"></div>
+        <div class="table-wrap"><table class="horse-table"><thead><tr><th>購入</th><th>馬番 / 馬名</th><th>3着内推定</th><th>単勝</th><th>複勝 下限</th><th>複勝 上限</th><th>配分</th><th>購入額</th></tr></thead><tbody id="horseRows"></tbody></table></div>
+        <div class="table-foot"><p><strong>市場ベース推定</strong>は単勝オッズを正規化した順位モデルの値です。独立した予測精度は検証されておらず、期待利益を示しません。<br><span id="selectionReason"></span></p><button id="autoSelect" class="text-button">上位6頭を再選択</button></div>
+        <div id="selectionNotice" class="notice warn" hidden></div>
+        <div class="analysis-grid"><article class="analysis-card"><span>購入総額</span><strong id="costValue">—</strong><small>上限 ¥10,000 / 100円単位</small></article><article class="analysis-card accent"><span>最悪ケース · 複勝下限</span><strong id="worstValue">—</strong><small>56通りの3着以内の組合せ</small></article><article class="analysis-card"><span>下限でも黒字の組合せ</span><strong id="profitValue">—</strong><small>組合せ数は発生確率ではありません</small></article></div>
+        <div class="scenario-head"><div><h3>的中頭数ごとの収支</h3><p>複勝オッズの表示範囲を使った概算</p></div><span>全 56 通り</span></div>
+        <div id="hitSummary" class="hit-grid"></div>
+        <details class="scenario-details"><summary>56通りの収支を表示</summary><div class="table-wrap"><table><thead><tr><th>3着以内の馬番</th><th>購入馬の的中</th><th>下限での収支</th><th>上限での収支</th></tr></thead><tbody id="scenarioRows"></tbody></table></div></details>
+        <div class="action-strip"><div><strong>購入前の試算を保存</strong><p>実際の購入はJRA側で行い、確定後に払戻額を入力します。</p></div><button id="savePlan" class="primary">記録に保存 <span>→</span></button></div>
+        <div class="ai-panel"><div><span class="eyebrow">OPTIONAL / AI</span><h3>補助分析</h3><p>APIキーをサーバー環境変数に設定すると、出馬表の近走データを材料に短い分析を生成します。購入額はAIに決めさせません。</p></div><button id="askAi" class="secondary" disabled>AIで分析</button><div id="aiOutput" class="ai-output" hidden></div></div>
+      </div>
+    </section>
+    <section id="ledger" class="section ledger-section"><div class="section-heading"><div><span class="eyebrow">03 / TRACK</span><h2>収支を記録する</h2><p>このブラウザのローカルストレージに保存します。別端末とは同期しません。</p></div><div class="ledger-actions"><button id="importData" class="secondary">JSONを読み込む ↑</button><button id="exportData" class="secondary">JSONを書き出す ↓</button><input id="importFile" type="file" accept="application/json,.json" hidden></div></div><div id="ledgerStats" class="ledger-stats"></div><div id="ledgerList" class="ledger-list"></div></section>
+  </main>
+  <footer><div class="shell"><span class="logo"><span class="logo-mark">8</span> 八頭ラボ</span><p>試算は確定払戻ではありません。購入直前にJRAで頭数・オッズ・締切を確認してください。</p><a href="https://www.jra.go.jp/kouza/baken/index.html" target="_blank" rel="noopener noreferrer">JRA馬券ルール ↗</a></div></footer>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
