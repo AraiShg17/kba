@@ -193,6 +193,38 @@ function setupManual() {
   });
 }
 
+async function loadBacktest() {
+  try {
+    const data = await api('/api/backtest');
+    const primary = data.methods.highInverse;
+    $('backtestStatus').hidden = true;
+    $('backtestContent').hidden = false;
+    $('backtestStats').innerHTML =
+      '<div><span>検証対象</span><strong>' + primary.count + 'レース</strong><small>候補 ' + data.candidates + '件 / 除外 ' + data.excluded + '件</small></div>' +
+      '<div><span>実払戻ベースの収支</span><strong class="negative">' + signed(primary.netYen) + '</strong><small>各レース ¥10,000 の仮想購入</small></div>' +
+      '<div><span>回収率</span><strong>' + ((1 + primary.roi) * 100).toFixed(1) + '%</strong><small>黒字 ' + primary.profitableRaces + ' / ' + primary.count + 'レース</small></div>';
+    const methods = [
+      ['highInverse', '高オッズ6頭・逆数配分'],
+      ['highEqual', '高オッズ6頭・等額配分'],
+      ['probabilityInverse', '市場推定上位6頭・逆数配分'],
+    ];
+    $('backtestMethods').innerHTML = methods.map(([key, name]) => {
+      const row = data.methods[key];
+      return '<tr><td><strong>' + name + '</strong></td><td>' + row.count + ' / ' + row.count + '</td><td>' + row.profitableRaces + ' / ' + row.count + '</td><td class="' + (row.netYen < 0 ? 'negative' : 'positive') + '">' + signed(row.netYen) + '</td><td>' + ((1 + row.roi) * 100).toFixed(1) + '%</td></tr>';
+    }).join('');
+    const maxAbs = Math.max(...data.months.map(month => Math.abs(month.net)));
+    $('backtestMonths').innerHTML = data.months.map(month => {
+      const width = maxAbs ? Math.max(3, Math.abs(month.net) / maxAbs * 100) : 0;
+      return '<div class="month-row"><span>' + escapeHtml(month.month.slice(5)) + '月</span><div class="month-bar"><i class="' + (month.net >= 0 ? 'gain' : 'loss') + '" style="width:' + width + '%"></i></div><strong class="' + (month.net < 0 ? 'negative' : 'positive') + '">' + signed(month.net) + '</strong></div>';
+    }).join('');
+    $('backtestRaces').innerHTML = data.races.map(race =>
+      '<tr><td>' + escapeHtml(race.date) + '</td><td>' + escapeHtml(race.venue + ' ' + race.race + 'R ' + race.name) +
+      '</td><td>' + race.hits + '頭</td><td class="' + (race.net < 0 ? 'negative' : 'positive') + '">' + signed(race.net) +
+      '</td><td><a href="' + escapeHtml(race.resultUrl) + '" target="_blank" rel="noopener noreferrer">結果 ↗</a></td></tr>'
+    ).join('');
+  } catch (error) { $('backtestStatus').textContent = '過去検証を読み込めませんでした: ' + error.message; }
+}
+
 $('refresh').addEventListener('click', search);
 $('budget').addEventListener('change', renderWorkbench);
 $('autoSelect').addEventListener('click', () => { if (current) { selected = defaultSelected(current.horses, $('selectionMode').value); renderWorkbench(); } });
@@ -226,4 +258,4 @@ $('askAi').addEventListener('click', async () => {
   $('askAi').disabled = false;
 });
 api('/api/ai/status').then(data => { $('askAi').disabled = !data.available; $('askAi').textContent = data.available ? 'AIで分析' : 'APIキー未設定'; }).catch(() => {});
-setupManual(); renderLedger(); search();
+setupManual(); renderLedger(); search(); loadBacktest();

@@ -9,7 +9,7 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="shell nav"><a href="/" class="logo"><span class="logo-mark">8</span><span>八頭<span class="logo-muted">ラボ</span></span></a><nav><a href="#search">レースを探す</a><a href="#workbench">配分を考える</a><a href="#ledger">収支記録</a></nav><span class="nav-tag">JRA 実戦ノート</span></div>
+    <div class="shell nav"><a href="/" class="logo"><span class="logo-mark">8</span><span>八頭<span class="logo-muted">ラボ</span></span></a><nav><a href="#search">レースを探す</a><a href="#workbench">配分を考える</a><a href="#backtest">過去検証</a><a href="#ledger">収支記録</a></nav><span class="nav-tag">JRA 実戦ノート</span></div>
   </header>
   <main class="shell">
     <section class="hero">
@@ -44,7 +44,8 @@
         <div class="ai-panel"><div><span class="eyebrow">OPTIONAL / AI</span><h3>補助分析</h3><p>APIキーをサーバー環境変数に設定すると、出馬表の近走データを材料に短い分析を生成します。購入額はAIに決めさせません。</p></div><button id="askAi" class="secondary" disabled>AIで分析</button><div id="aiOutput" class="ai-output" hidden></div></div>
       </div>
     </section>
-    <section id="ledger" class="section ledger-section"><div class="section-heading"><div><span class="eyebrow">03 / TRACK</span><h2>収支を記録する</h2><p>このブラウザのローカルストレージに保存します。別端末とは同期しません。</p></div><div class="ledger-actions"><button id="importData" class="secondary">JSONを読み込む ↑</button><button id="exportData" class="secondary">JSONを書き出す ↓</button><input id="importFile" type="file" accept="application/json,.json" hidden></div></div><div id="ledgerStats" class="ledger-stats"></div><div id="ledgerList" class="ledger-list"></div></section>
+    <section id="backtest" class="section backtest-section"><div class="section-heading"><div><span class="eyebrow">03 / BACKTEST</span><h2>過去の107レースで検証</h2><p>2026年1〜10月のJRA 8頭立て。最終オッズで事後選定し、実際の複勝払戻で集計しました。</p></div><a class="secondary" href="https://github.com/AraiShg17/kba/blob/feat/eight-runner-lab/BACKTEST.md" target="_blank" rel="noopener noreferrer">検証方法と限界 ↗</a></div><div id="backtestStatus" class="notice subtle">検証結果を読み込み中…</div><div id="backtestContent" hidden><div id="backtestStats" class="backtest-stats"></div><div class="table-wrap"><table class="backtest-table"><thead><tr><th>方式</th><th>的中</th><th>黒字</th><th>収支</th><th>回収率</th></tr></thead><tbody id="backtestMethods"></tbody></table></div><div class="backtest-note">的中は107/107でも、高オッズ6頭・逆数配分の黒字は19/107。最終オッズは購入時に確定していないため、過去検証の収支をそのまま再現できるわけではありません。</div><h3 class="backtest-subheading">月別収支 · 高オッズ6頭 / 逆数配分</h3><div id="backtestMonths" class="backtest-months"></div><details class="scenario-details"><summary>対象レースと実績を表示</summary><div class="table-wrap"><table><thead><tr><th>日付</th><th>競馬場・レース</th><th>的中</th><th>収支</th><th>JRA結果</th></tr></thead><tbody id="backtestRaces"></tbody></table></div></details></div></section>
+    <section id="ledger" class="section ledger-section"><div class="section-heading"><div><span class="eyebrow">04 / TRACK</span><h2>収支を記録する</h2><p>このブラウザのローカルストレージに保存します。別端末とは同期しません。</p></div><div class="ledger-actions"><button id="importData" class="secondary">JSONを読み込む ↑</button><button id="exportData" class="secondary">JSONを書き出す ↓</button><input id="importFile" type="file" accept="application/json,.json" hidden></div></div><div id="ledgerStats" class="ledger-stats"></div><div id="ledgerList" class="ledger-list"></div></section>
   </main>
   <footer><div class="shell"><span class="logo"><span class="logo-mark">8</span> 八頭ラボ</span><p>試算は確定払戻ではありません。購入直前にJRAで頭数・オッズ・締切を確認してください。</p><a href="https://www.jra.go.jp/kouza/baken/index.html" target="_blank" rel="noopener noreferrer">JRA馬券ルール ↗</a></div></footer>
   <script type="module" src="/app.js"></script>

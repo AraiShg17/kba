@@ -169,6 +169,26 @@ const server = http.createServer(async (req, res) => {
       }
       return json(res, 200, { horses: horses.map(h => ({ ...h, ...(odds.find(o => o.number === h.number) || {}) })), oddsError, fetchedAt: new Date().toISOString() });
     }
+    if (url.pathname === '/api/backtest' && req.method === 'GET') {
+      const report = JSON.parse(await readFile(path.join(root, 'data/backtest-2026-01_to_2026-10.json'), 'utf8'));
+      const byMonth = {};
+      for (const race of report.races) {
+        const month = race.date.slice(0, 7);
+        byMonth[month] ||= { month, count: 0, net: 0, profitable: 0 };
+        byMonth[month].count++;
+        byMonth[month].net += race.methods.highInverse.net;
+        byMonth[month].profitable += Number(race.methods.highInverse.net > 0);
+      }
+      return json(res, 200, {
+        generatedAt: report.generatedAt, candidates: report.candidates, excluded: report.failures.length,
+        methods: report.methods, months: Object.values(byMonth),
+        races: report.races.map(race => ({
+          date: race.date, venue: race.venue, race: race.race, name: race.name,
+          resultUrl: race.resultUrl, oddsUrl: race.oddsUrl,
+          hits: race.methods.highInverse.hits, net: race.methods.highInverse.net,
+        })),
+      });
+    }
     if (url.pathname === '/api/ai/status' && req.method === 'GET') return json(res, 200, { available: Boolean(process.env.OPENAI_API_KEY) });
     if (url.pathname === '/api/ai' && req.method === 'POST') return json(res, 200, { text: await aiAnalysis(await readBody(req)) });
     if (files[url.pathname] && req.method === 'GET') {
