@@ -1,0 +1,31 @@
+{
+  "name": "kba",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "backtest": "node scripts/backtest.mjs",
+    "backtest:runners": "node scripts/runner-study.mjs",
+    "backtest:enrich": "node scripts/enrich-backtest.mjs",
+    "backtest:jockeys": "node scripts/jockey-2025.mjs",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AraiShg17/kba.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/AraiShg17/kba/issues"
+  },
+  "homepage": "https://github.com/AraiShg17/kba#readme",
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "dotenv": "^18.0.10",
+    "iconv-lite": "^0.7.3"
+  }
+}
