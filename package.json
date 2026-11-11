@@ -6,6 +6,9 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "backtest": "node scripts/backtest.mjs",
+    "backtest:runners": "node scripts/runner-study.mjs",
+    "backtest:enrich": "node scripts/enrich-backtest.mjs",
+    "backtest:jockeys": "node scripts/jockey-2025.mjs",
     "test": "node --test"
   },
   "repository": {
